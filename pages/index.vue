@@ -1,13 +1,10 @@
 <script setup lang="ts">
 const { theme, toggleTheme } = useAppTheme()
-
-const isLoggedIn = ref(true)
-const userEmail = ref('user@example.com')
 </script>
 
 <template>
   <div class="h-full flex flex-col">
-    <LayoutAppHeader :theme="theme" :is-logged-in="isLoggedIn" :user-email="userEmail" @theme-toggle="toggleTheme" />
+    <LayoutAppHeader :theme="theme" @theme-toggle="toggleTheme" />
 
     <main class="flex-1 overflow-y-auto">
       <div class="max-w-[1440px] mx-auto px-4 sm:px-6 py-4 sm:py-6">

@@ -1,16 +1,35 @@
 <script setup lang="ts">
 import type { AppTheme } from '~/types'
-import { Palette, LogIn } from 'lucide-vue-next'
+import { Palette, LogIn, Loader2 } from 'lucide-vue-next'
+import { useUserStore } from '~/stores/user.js'
+import { getLoginUrl } from '~/shared/utils/url/getLoginUrl.js'
 
 const props = defineProps<{
   theme: AppTheme
-  isLoggedIn: boolean
-  userEmail?: string
 }>()
 
 const emit = defineEmits<{ themeToggle: [] }>()
 
+const userStore = useUserStore()
 const themeClasses = computed(() => useThemeClasses(props.theme))
+
+const loginUrl = computed(() => {
+  if (import.meta.client) {
+    return getLoginUrl()
+  }
+  return '#'
+})
+
+const userEmail = computed(() => {
+  const data = userStore.userData as { email?: string; mobile?: string }
+  return data?.email || data?.mobile || ''
+})
+
+onMounted(() => {
+  if (userStore.isAuthenticated || userStore.isCheckingAuth) {
+    userStore.fetchUserInfo()
+  }
+})
 </script>
 
 <template>
@@ -20,21 +39,31 @@ const themeClasses = computed(() => useThemeClasses(props.theme))
     <div class="relative max-w-[1440px] mx-auto px-4 sm:px-6 py-3">
       <div class="flex items-center justify-between gap-4">
         <div class="flex items-center gap-2 sm:gap-3">
-          <div v-if="isLoggedIn" class="flex items-center gap-2">
+          <div v-if="userStore.isAuthenticated" class="flex items-center gap-2">
             <div class="w-7 h-7 sm:w-8 sm:h-8 rounded-full bg-gradient-to-br from-purple-400 to-purple-600 flex items-center justify-center ring-2 ring-white/30">
               <span class="text-xs sm:text-sm">👤</span>
             </div>
             <span class="text-xs sm:text-sm text-white/90 hidden sm:inline">{{ userEmail }}</span>
           </div>
-          <button
+
+          <div
+            v-else-if="userStore.isCheckingAuth"
+            class="flex items-center gap-2 px-4 py-2 text-white/70"
+            aria-busy="true"
+          >
+            <Loader2 class="w-4 h-4 animate-spin" />
+            <span class="text-xs sm:text-sm hidden sm:inline">در حال بررسی...</span>
+          </div>
+
+          <a
             v-else
-            type="button"
+            :href="loginUrl"
             class="text-white px-4 sm:px-6 py-2 rounded-lg transition-all shadow-md hover:shadow-lg hover:opacity-90 flex items-center gap-2"
             :class="themeClasses.gradient"
           >
             <LogIn class="w-3.5 h-3.5 sm:w-4 sm:h-4" />
-            <span class="text-xs sm:text-sm">ورود</span>
-          </button>
+            <span class="text-xs sm:text-sm">ورود/ثبت‌نام</span>
+          </a>
 
           <button
             type="button"
