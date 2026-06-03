@@ -1,0 +1,34 @@
+<script setup lang="ts">
+const { theme, toggleTheme } = useAppTheme()
+
+const isLoggedIn = ref(true)
+const userEmail = ref('user@example.com')
+</script>
+
+<template>
+  <div class="h-full flex flex-col">
+    <LayoutAppHeader :theme="theme" :is-logged-in="isLoggedIn" :user-email="userEmail" @theme-toggle="toggleTheme" />
+
+    <main class="flex-1 overflow-y-auto">
+      <div class="max-w-[1440px] mx-auto px-4 sm:px-6 py-4 sm:py-6">
+        <div class="grid grid-cols-1 lg:grid-cols-12 gap-4 mb-4">
+          <div class="lg:col-span-3 order-1">
+            <LeaderboardPanel :theme="theme" />
+          </div>
+
+          <div class="lg:col-span-6 order-3 lg:order-2">
+            <MatchesSection :theme="theme" />
+          </div>
+
+          <div class="lg:col-span-3 order-2 lg:order-3">
+            <RewardsSection :theme="theme" />
+          </div>
+        </div>
+
+        <div class="mt-4">
+          <HistoryPredictionHistory :theme="theme" />
+        </div>
+      </div>
+    </main>
+  </div>
+</template>
