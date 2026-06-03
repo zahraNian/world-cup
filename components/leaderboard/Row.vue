@@ -12,7 +12,7 @@ const themeClasses = computed(() => useThemeClasses(props.theme))
 
 <template>
   <div
-    class="flex items-center gap-2 px-2.5 py-1.5 rounded-lg hover:bg-surface-hover transition-all"
+    class="flex items-center gap-2 px-2.5 py-1.5 rounded-lg hover:bg-white/[0.06] transition-all"
   >
     <div class="w-7 flex justify-center">
       <div

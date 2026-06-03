@@ -26,7 +26,7 @@ function goTo(page: number) {
   >
     <button
       type="button"
-      class="p-1.5 rounded-lg bg-surface-inset hover:bg-surface-hover text-fg-secondary disabled:opacity-40 disabled:cursor-not-allowed transition-all border border-line"
+      class="p-1.5 rounded-lg glass-inset hover:bg-white/[0.08] text-fg-secondary disabled:opacity-40 disabled:cursor-not-allowed transition-all"
       :disabled="currentPage === 1"
       @click="goTo(Math.max(1, currentPage - 1))"
     >
@@ -41,7 +41,7 @@ function goTo(page: number) {
       :class="
         currentPage === page
           ? `${themeClasses.gradient} text-white shadow-md`
-          : 'bg-surface-inset text-fg-secondary hover:bg-surface-hover border border-line'
+          : 'glass-inset text-fg-secondary hover:bg-white/[0.08]'
       "
       @click="goTo(page)"
     >
@@ -50,7 +50,7 @@ function goTo(page: number) {
 
     <button
       type="button"
-      class="p-1.5 rounded-lg bg-surface-inset hover:bg-surface-hover text-fg-secondary disabled:opacity-40 disabled:cursor-not-allowed transition-all border border-line"
+      class="p-1.5 rounded-lg glass-inset hover:bg-white/[0.08] text-fg-secondary disabled:opacity-40 disabled:cursor-not-allowed transition-all"
       :disabled="currentPage === totalPages"
       @click="goTo(Math.min(totalPages, currentPage + 1))"
     >

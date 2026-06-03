@@ -20,7 +20,7 @@ const themeClasses = computed(() => useThemeClasses(props.theme))
 const statusBadges: Record<ReferralStatus, { bg: string; text: string; icon: typeof Shield }> = {
   verified: { bg: 'bg-blue-500/15', text: 'text-blue-400', icon: Shield },
   kyc: { bg: 'bg-emerald-500/15', text: 'text-emerald-400', icon: CheckCircle },
-  registered: { bg: 'bg-surface-inset', text: 'text-fg-muted', icon: UserPlus },
+  registered: { bg: 'glass-inset', text: 'text-fg-muted', icon: UserPlus },
 }
 
 function getStatusBadge(status: string) {
@@ -53,7 +53,7 @@ async function handleCopy() {
           <div class="text-xl font-bold text-fg">۸۹۰,۰۰۰ تومان</div>
         </div>
 
-        <div class="bg-surface-inset rounded-lg p-3 flex items-start gap-2 border border-line">
+        <div class="glass-inset rounded-lg p-3 flex items-start gap-2">
           <Lock class="w-4 h-4 text-fg-muted mt-0.5 flex-shrink-0" />
           <div class="flex-1 min-w-0">
             <div class="text-xs text-fg-secondary mb-0.5">جوایز در انتظار تسویه</div>
@@ -82,12 +82,12 @@ async function handleCopy() {
           <label class="text-xs text-fg-secondary mb-1.5 mt-5 block">لینک دعوت شما</label>
           <div class="flex gap-2">
             <input type="text" :value="referralLink" readonly
-              class="flex-1 px-3 py-2 bg-surface-inset border border-line rounded-lg text-xs text-fg-secondary">
+              class="flex-1 px-3 py-2 glass-inset rounded-lg text-xs text-fg-secondary">
             <button type="button"
               class="px-3 py-2 rounded-lg border transition-colors flex items-center gap-1.5 shrink-0 text-xs"
               :class="copied
                 ? 'border-emerald-500/30 bg-emerald-500/15 text-emerald-400'
-                : 'border-line bg-surface-inset text-fg-secondary hover:bg-surface-hover hover:text-fg'"
+                : 'border-line glass-inset text-fg-secondary hover:bg-white/[0.08] hover:text-fg'"
               @click="handleCopy">
               <Copy v-if="!copied" class="w-3.5 h-3.5" />
               <span>{{ copied ? 'کپی شد' : 'کپی' }}</span>

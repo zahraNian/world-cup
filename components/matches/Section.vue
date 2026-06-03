@@ -34,7 +34,7 @@ function handlePredict(matchId: number, prediction: PredictionChoice) {
         :gradient="stat.gradient" />
     </div>
 
-    <div class="rounded-xl p-3 border border-blue-500/25 bg-blue-500/10">
+    <div class="rounded-xl p-3 border border-blue-400/20 bg-blue-500/10 backdrop-blur-md">
       <div class="flex items-start gap-2">
         <Info class="w-4 h-4 flex-shrink-0 mt-0.5 text-blue-400" />
         <p class="text-xs leading-relaxed text-blue-200/90">

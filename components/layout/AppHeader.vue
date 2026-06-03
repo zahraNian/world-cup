@@ -14,8 +14,8 @@ const themeClasses = computed(() => useThemeClasses(props.theme))
 </script>
 
 <template>
-  <header class="sticky top-0 z-50 relative overflow-hidden border-b border-line shadow-lg shadow-black/30 backdrop-blur-md">
-    <div class="absolute inset-0 bg-gradient-to-b from-[#0b0f17]/80 via-[#0b0f17]/70 to-[#0b0f17]/90" aria-hidden="true" />
+  <header class="sticky top-0 z-50 relative overflow-hidden border-b border-white/10 shadow-lg shadow-black/20 backdrop-blur-xl">
+    <div class="absolute inset-0 bg-[#0b0f17]/35" aria-hidden="true" />
 
     <div class="relative max-w-[1440px] mx-auto px-4 sm:px-6 py-3">
       <div class="flex items-center justify-between gap-4">

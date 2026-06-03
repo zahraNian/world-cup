@@ -12,7 +12,7 @@ const themeClasses = computed(() => useThemeClasses(props.theme))
 </script>
 
 <template>
-  <div class="flex items-center justify-between p-2.5 bg-surface-inset rounded-lg hover:bg-surface-hover border border-line/50 transition-all">
+  <div class="flex items-center justify-between p-2.5 glass-inset rounded-lg hover:bg-white/[0.08] transition-all">
     <div class="flex items-center gap-2 flex-1 min-w-0">
       <div class="min-w-0 flex-1">
         <div class="text-xs font-medium text-fg truncate">{{ user.name }}</div>

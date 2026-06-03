@@ -37,7 +37,7 @@ const itemClasses = computed(() => [
   props.hasStarted
     ? 'opacity-55 border-r-transparent'
     : props.prediction
-      ? `${themeClasses.value.borderRight} bg-surface-hover/80`
+      ? `${themeClasses.value.borderRight} bg-white/[0.08]`
       : 'border-r-transparent',
 ])
 
@@ -59,7 +59,7 @@ function teamShortName(name: string) {
 
 <template>
   <div
-    class="match-item relative px-4 py-3 transition-colors hover:bg-surface-hover/60"
+    class="match-item relative px-4 py-3 transition-colors hover:bg-white/[0.06]"
     :class="itemClasses"
   >
     <!-- Card layout — عرض کم -->
@@ -163,7 +163,7 @@ function teamShortName(name: string) {
       <div class="w-[220px] flex-shrink-0">
         <div
           v-if="hasStarted"
-          class="flex items-center justify-center gap-1.5 py-2.5 rounded-lg bg-surface-inset text-fg-muted"
+          class="flex items-center justify-center gap-1.5 py-2.5 rounded-lg glass-inset text-fg-muted"
         >
           <Clock class="w-3.5 h-3.5" />
           <span class="text-xs font-medium whitespace-nowrap">مسابقه شروع شده</span>
@@ -179,7 +179,7 @@ function teamShortName(name: string) {
             :class="
               prediction === option.key
                 ? `${themeClasses.gradient} text-white shadow-sm`
-                : 'bg-surface-inset border border-line hover:border-line-strong text-fg-secondary hover:bg-surface-hover'
+                : 'glass-inset border border-line hover:border-line-strong text-fg-secondary hover:bg-white/[0.08]'
             "
             @click="handleVote(option.key)"
           >

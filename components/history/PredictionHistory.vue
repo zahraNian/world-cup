@@ -53,7 +53,7 @@ const statusBadges: Record<PredictionStatus, { bg: string; text: string; label: 
           <tr
             v-for="record in paginatedData"
             :key="record.id"
-            class="border-b border-line hover:bg-surface-hover transition-all"
+            class="border-b border-line hover:bg-white/[0.06] transition-all"
           >
             <td class="py-3 px-3 text-xs text-fg-secondary">{{ record.date }}</td>
             <td class="py-3 px-3 text-xs text-fg font-medium">
@@ -85,7 +85,7 @@ const statusBadges: Record<PredictionStatus, { bg: string; text: string; label: 
       <div
         v-for="record in paginatedData"
         :key="record.id"
-        class="rounded-lg p-3 space-y-2 transition-all bg-surface-inset border border-line"
+        class="rounded-lg p-3 space-y-2 transition-all glass-inset"
       >
         <div class="flex items-center justify-between">
           <span class="text-[10px] text-fg-muted">{{ record.date }}</span>

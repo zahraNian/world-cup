@@ -23,7 +23,7 @@ const sizeClasses = {
       sizeClasses[size ?? 'sm'],
       active
         ? `${themeClasses.lightBg} ${themeClasses.border} shadow-md`
-        : 'bg-surface-inset text-fg-secondary hover:bg-surface-hover border-line hover:border-line-strong',
+        : 'glass-inset text-fg-secondary hover:bg-white/[0.08] border-line hover:border-line-strong',
     ]"
   >
     <slot />
