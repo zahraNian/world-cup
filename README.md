@@ -30,8 +30,12 @@ components/
 composables/
 └── useTheme.ts      # Theme state + class helpers
 
-data/
-└── mock.ts          # Sample data
+stores/
+└── campaign.ts      # Campaign API state (Pinia)
+
+shared/
+├── utils/campaign.ts
+└── constants/campaign.js
 
 types/
 └── index.ts         # Shared TypeScript types

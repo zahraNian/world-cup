@@ -1,21 +1,32 @@
 <script setup lang="ts">
 import type { AppTheme } from '~/types'
-import { Trophy } from 'lucide-vue-next'
-import { topUsers } from '~/data/mock'
+import { Trophy, Loader2 } from 'lucide-vue-next'
+import { useCampaignStore } from '~/stores/campaign'
+import { useUserStore } from '~/stores/user.js'
 
-const props = withDefaults(
-  defineProps<{
-    theme: AppTheme
-    currentUserRank?: number
-    currentUserScore?: number
-  }>(),
-  {
-    currentUserRank: 45,
-    currentUserScore: 890,
-  },
-)
+const props = defineProps<{ theme: AppTheme }>()
+
+const campaignStore = useCampaignStore()
+const userStore = useUserStore()
 
 const themeClasses = computed(() => useThemeClasses(props.theme))
+
+const userRank = computed(() => {
+  if (!userStore.isAuthenticated) return null
+  const s = campaignStore.summary
+  if (!s) return null
+  return {
+    correctCount: s.correctCount,
+    referralCount: s.referralCount,
+    totalPrize: s.totalPrize,
+  }
+})
+
+onMounted(() => {
+  if (!campaignStore.ranking.length) {
+    campaignStore.fetchRanking()
+  }
+})
 </script>
 
 <template>
@@ -25,13 +36,28 @@ const themeClasses = computed(() => useThemeClasses(props.theme))
       <Trophy class="w-4 h-4" :class="themeClasses.text" />
     </div>
 
-    <div class="space-y-1.5 overflow-hidden">
+    <div v-if="campaignStore.rankingLoading && !campaignStore.ranking.length" class="py-6 flex justify-center">
+      <Loader2 class="w-5 h-5 animate-spin text-fg-muted" />
+    </div>
+
+    <div v-else-if="!campaignStore.ranking.length" class="py-6 text-center text-xs text-fg-muted">
+      هنوز رتبه‌بندی ثبت نشده است.
+    </div>
+
+    <div v-else class="space-y-1.5 overflow-hidden">
       <LeaderboardUserRankCard
+        v-if="userRank"
         :theme="theme"
-        :rank="currentUserRank"
-        :score="currentUserScore"
+        :correct-count="userRank.correctCount"
+        :referral-count="userRank.referralCount"
+        :total-prize="userRank.totalPrize"
       />
-      <LeaderboardRow v-for="user in topUsers" :key="user.rank" :theme="theme" :user="user" />
+      <LeaderboardRow
+        v-for="entry in campaignStore.ranking"
+        :key="entry.rank"
+        :theme="theme"
+        :entry="entry"
+      />
     </div>
 
     <div class="mt-4 pt-4 border-t border-line">

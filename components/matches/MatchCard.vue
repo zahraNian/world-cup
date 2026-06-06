@@ -1,59 +1,64 @@
 <script setup lang="ts">
-import type { AppTheme, PredictionChoice } from '~/types'
-import { Clock, Trophy, Zap, Loader2, CheckCircle2 } from 'lucide-vue-next'
+import type { AppTheme, CampaignQuestion, ScenarioKey } from '~/types'
+import { Clock, Trophy, Zap, Loader2, CheckCircle2, Star, LogIn } from 'lucide-vue-next'
+import {
+  formatQuestionDate,
+  getScenarioOptions,
+  isQuestionLocked,
+  parseAmount,
+} from '~/shared/utils/campaign'
+import { useCampaignStore } from '~/stores/campaign'
+import { useUserStore } from '~/stores/user.js'
+import { getLoginUrl } from '~/shared/utils/url/getLoginUrl.js'
 
-const props = withDefaults(
-  defineProps<{
-    theme: AppTheme
-    teamA: string
-    teamB: string
-    flagA: string
-    flagB: string
-    date: string
-    time: string
-    reward: number
-    prediction?: PredictionChoice
-    hasStarted?: boolean
-  }>(),
-  { hasStarted: false },
-)
-
-const emit = defineEmits<{
-  predict: [choice: PredictionChoice]
+const props = defineProps<{
+  theme: AppTheme
+  question: CampaignQuestion
 }>()
 
-const isLoading = ref(false)
+const campaignStore = useCampaignStore()
+const userStore = useUserStore()
+
+const isLoading = computed(() => campaignStore.submittingMissionIds.has(props.question.missionId))
 const showSuccess = ref(false)
+const isLocked = computed(() => isQuestionLocked(props.question))
 
 const themeClasses = computed(() => useThemeClasses(props.theme))
 
-const voteOptions = computed(() => [
-  { key: 'A' as const, label: `برد ${teamShortName(props.teamA)}` },
-  { key: 'draw' as const, label: 'مساوی' },
-  { key: 'B' as const, label: `برد ${teamShortName(props.teamB)}` },
-])
+const formattedDate = computed(() => formatQuestionDate(props.question.finishesAt))
+
+const reward = computed(() => parseAmount(props.question.currencyAmount))
+
+const voteOptions = computed(() => getScenarioOptions(props.question.details))
+
+const loginUrl = computed(() => {
+  if (import.meta.client) return getLoginUrl()
+  return '#'
+})
+
+const showLoginCta = computed(
+  () => !userStore.isAuthenticated && !userStore.isCheckingAuth && !isLocked.value,
+)
+
+const showVoteButtons = computed(() => userStore.isAuthenticated && !isLocked.value)
 
 const itemClasses = computed(() => [
-  props.hasStarted
+  isLocked.value
     ? 'opacity-55 border-r-transparent'
-    : props.prediction
+    : props.question.userAnswer
       ? `${themeClasses.value.borderRight} bg-white/[0.08]`
       : 'border-r-transparent',
 ])
 
-async function handleVote(vote: PredictionChoice) {
-  if (props.hasStarted || isLoading.value) return
+async function handleVote(key: ScenarioKey) {
+  if (isLocked.value || isLoading.value) return
 
-  isLoading.value = true
-  await new Promise(resolve => setTimeout(resolve, 800))
-  emit('predict', vote)
-  isLoading.value = false
-  showSuccess.value = true
-  setTimeout(() => { showSuccess.value = false }, 3000)
-}
+  const result = await campaignStore.submitAnswer(props.question.missionId, key)
 
-function teamShortName(name: string) {
-  return name.split(' ')[0]
+  if (result.ok) {
+    showSuccess.value = true
+    setTimeout(() => { showSuccess.value = false }, 3000)
+  }
 }
 </script>
 
@@ -62,12 +67,18 @@ function teamShortName(name: string) {
     class="match-item relative px-4 py-3 transition-colors hover:bg-white/[0.06]"
     :class="itemClasses"
   >
-    <!-- Card layout — عرض کم -->
     <div class="match-card-layout space-y-4">
-      <div class="flex items-center justify-between gap-2" :class="{ 'blur-[0.5px]': hasStarted }">
+      <div class="flex items-center justify-between gap-2" :class="{ 'blur-[0.5px]': isLocked }">
         <div class="flex items-center gap-2 text-xs text-fg-muted min-w-0">
           <Clock class="w-4 h-4 flex-shrink-0" />
-          <span class="truncate">{{ date }} • {{ time }}</span>
+          <span class="truncate">{{ formattedDate.date }} • {{ formattedDate.time }}</span>
+          <span
+            v-if="question.special"
+            class="inline-flex items-center gap-0.5 px-2 py-0.5 rounded-full text-[10px] font-bold bg-amber-500/15 text-amber-300"
+          >
+            <Star class="w-2.5 h-2.5" />
+            ویژه
+          </span>
         </div>
         <div
           class="px-3 py-1.5 rounded-full text-xs font-bold flex items-center gap-1.5 shadow-sm flex-shrink-0"
@@ -78,32 +89,38 @@ function teamShortName(name: string) {
         </div>
       </div>
 
-      <div class="flex items-center justify-between gap-2" :class="{ 'blur-[0.5px]': hasStarted }">
-        <div class="flex flex-col items-center gap-2 flex-1 min-w-0">
-          <div class="text-2xl leading-none">{{ flagA }}</div>
-          <div class="text-sm font-bold text-fg text-center truncate w-full px-1">{{ teamA }}</div>
-        </div>
-
-        <div class="px-2 sm:px-4 flex flex-col items-center gap-1 flex-shrink-0">
-          <Zap class="w-3 h-3" :class="themeClasses.accent" />
-          <div class="text-xs font-bold text-fg-faint">VS</div>
-        </div>
-
-        <div class="flex flex-col items-center gap-2 flex-1 min-w-0">
-          <div class="text-2xl leading-none">{{ flagB }}</div>
-          <div class="text-sm font-bold text-fg text-center truncate w-full px-1">{{ teamB }}</div>
+      <div class="text-center" :class="{ 'blur-[0.5px]': isLocked }">
+        <div class="flex items-center justify-center gap-2">
+          <Zap class="w-3.5 h-3.5" :class="themeClasses.accent" />
+          <h3 class="text-sm font-bold text-fg">{{ question.missionName }}</h3>
         </div>
       </div>
 
       <div
-        v-if="hasStarted"
+        v-if="isLocked"
         class="border-2 rounded-lg py-2.5 text-center"
         :class="[themeClasses.border, `${themeClasses.bg}/10`]"
       >
-        <span class="text-sm font-bold text-fg-secondary">مسابقه شروع شده است</span>
+        <span class="text-sm font-bold text-fg-secondary">
+          {{ question.userAnswer ? 'پاسخ شما ثبت شده است' : 'مهلت پاسخ‌دهی به پایان رسیده' }}
+        </span>
       </div>
 
-      <div v-else class="grid grid-cols-3 gap-2">
+      <a
+        v-else-if="showLoginCta"
+        :href="loginUrl"
+        class="flex items-center justify-center gap-2 py-2.5 rounded-lg text-xs sm:text-sm font-medium text-white shadow-lg hover:opacity-90 transition-opacity"
+        :class="themeClasses.gradient"
+      >
+        <LogIn class="w-4 h-4 flex-shrink-0" />
+        <span>ورود / شرکت در مسابقه</span>
+      </a>
+
+      <div v-else-if="userStore.isCheckingAuth" class="py-2.5 flex justify-center">
+        <Loader2 class="w-5 h-5 animate-spin text-fg-muted" />
+      </div>
+
+      <div v-else-if="showVoteButtons" class="grid grid-cols-3 gap-2">
         <button
           v-for="option in voteOptions"
           :key="option.key"
@@ -111,7 +128,7 @@ function teamShortName(name: string) {
           :disabled="isLoading"
           class="py-2.5 rounded-lg transition-all text-xs sm:text-sm font-medium"
           :class="
-            prediction === option.key
+            question.userAnswer === option.key
               ? `${themeClasses.gradient} text-white shadow-lg`
               : 'bg-surface-inset border-2 border-line hover:border-line-strong text-fg-secondary shadow-sm hover:bg-surface-hover'
           "
@@ -123,38 +140,32 @@ function teamShortName(name: string) {
       </div>
     </div>
 
-    <!-- Row layout — عرض کافی -->
     <div class="match-row-layout">
       <div
         class="flex flex-col items-start justify-center w-[72px] flex-shrink-0 gap-0.5"
-        :class="{ 'blur-[0.5px]': hasStarted }"
+        :class="{ 'blur-[0.5px]': isLocked }"
       >
-        <span class="text-sm font-bold tabular-nums text-fg leading-none">{{ time }}</span>
-        <span class="text-[10px] text-fg-muted leading-tight">{{ date }}</span>
+        <span class="text-sm font-bold tabular-nums text-fg leading-none">{{ formattedDate.time }}</span>
+        <span class="text-[10px] text-fg-muted leading-tight">{{ formattedDate.date }}</span>
       </div>
 
       <div
-        class="flex-1 flex items-center justify-center gap-4 min-w-0 py-1"
-        :class="{ 'blur-[0.5px]': hasStarted }"
+        class="flex-1 flex items-center justify-center gap-2 min-w-0 py-1"
+        :class="{ 'blur-[0.5px]': isLocked }"
       >
-        <div class="flex flex-col items-center gap-1.5 flex-1 min-w-0">
-          <span class="text-2xl leading-none">{{ flagA }}</span>
-          <span class="text-sm font-semibold text-fg text-center truncate w-full px-1">{{ teamA }}</span>
-        </div>
-
-        <div class="flex flex-col items-center justify-center flex-shrink-0 self-stretch py-2">
-          <span class="text-[10px] font-bold tracking-widest text-fg-faint">VS</span>
-        </div>
-
-        <div class="flex flex-col items-center gap-1.5 flex-1 min-w-0">
-          <span class="text-2xl leading-none">{{ flagB }}</span>
-          <span class="text-sm font-semibold text-fg text-center truncate w-full px-1">{{ teamB }}</span>
-        </div>
+        <Zap class="w-3.5 h-3.5 flex-shrink-0" :class="themeClasses.accent" />
+        <span class="text-sm font-semibold text-fg text-center truncate">{{ question.missionName }}</span>
+        <span
+          v-if="question.special"
+          class="inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded text-[10px] font-bold bg-amber-500/15 text-amber-300 flex-shrink-0"
+        >
+          <Star class="w-2.5 h-2.5" />
+        </span>
       </div>
 
       <div
         class="flex items-center gap-1 px-2.5 py-1 rounded-lg text-[11px] font-bold flex-shrink-0"
-        :class="[themeClasses.lightBg, themeClasses.accentDark, { 'blur-[0.5px]': hasStarted }]"
+        :class="[themeClasses.lightBg, themeClasses.accentDark, { 'blur-[0.5px]': isLocked }]"
       >
         <Trophy class="w-3 h-3" />
         <span class="whitespace-nowrap">{{ formatFaNumber(reward) }} تومان</span>
@@ -162,14 +173,30 @@ function teamShortName(name: string) {
 
       <div class="w-[220px] flex-shrink-0">
         <div
-          v-if="hasStarted"
+          v-if="isLocked"
           class="flex items-center justify-center gap-1.5 py-2.5 rounded-lg glass-inset text-fg-muted"
         >
           <Clock class="w-3.5 h-3.5" />
-          <span class="text-xs font-medium whitespace-nowrap">مسابقه شروع شده</span>
+          <span class="text-xs font-medium whitespace-nowrap">
+            {{ question.userAnswer ? 'ثبت شده' : 'مهلت تمام شد' }}
+          </span>
         </div>
 
-        <div v-else class="grid grid-cols-3 gap-1.5">
+        <a
+          v-else-if="showLoginCta"
+          :href="loginUrl"
+          class="flex items-center justify-center gap-1.5 py-2 px-2 rounded-md text-[11px] font-medium text-white shadow-sm hover:opacity-90 transition-opacity truncate"
+          :class="themeClasses.gradient"
+        >
+          <LogIn class="w-3.5 h-3.5 flex-shrink-0" />
+          <span class="truncate">ورود / شرکت در مسابقه</span>
+        </a>
+
+        <div v-else-if="userStore.isCheckingAuth" class="py-2.5 flex justify-center">
+          <Loader2 class="w-4 h-4 animate-spin text-fg-muted" />
+        </div>
+
+        <div v-else-if="showVoteButtons" class="grid grid-cols-3 gap-1.5">
           <button
             v-for="option in voteOptions"
             :key="option.key"
@@ -177,7 +204,7 @@ function teamShortName(name: string) {
             :disabled="isLoading"
             class="py-2 px-1 rounded-md transition-all text-[11px] font-medium truncate"
             :class="
-              prediction === option.key
+              question.userAnswer === option.key
                 ? `${themeClasses.gradient} text-white shadow-sm`
                 : 'glass-inset border border-line hover:border-line-strong text-fg-secondary hover:bg-white/[0.08]'
             "

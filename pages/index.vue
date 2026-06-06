@@ -1,5 +1,35 @@
 <script setup lang="ts">
+import { useCampaignStore } from '~/stores/campaign'
+import { useUserStore } from '~/stores/user.js'
+
 const { theme, toggleTheme } = useAppTheme()
+const campaignStore = useCampaignStore()
+const userStore = useUserStore()
+
+async function loadCampaignData() {
+  await campaignStore.initPublicData()
+
+  if (userStore.isCheckingAuth) {
+    await userStore.waitForAuthentication()
+  }
+  if (userStore.isAuthenticated) {
+    await campaignStore.initUserData()
+  }
+}
+
+onMounted(loadCampaignData)
+
+watch(
+  () => userStore.isAuthenticated,
+  (authed) => {
+    if (authed) {
+      campaignStore.initUserData()
+    } else {
+      campaignStore.resetUserData()
+      campaignStore.fetchQuestions(campaignStore.activeFilter, { force: true })
+    }
+  },
+)
 </script>
 
 <template>

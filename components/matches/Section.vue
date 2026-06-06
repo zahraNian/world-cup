@@ -1,37 +1,75 @@
 <script setup lang="ts">
-import type { AppTheme } from '~/types'
-import { Info } from 'lucide-vue-next'
-import { matches, matchFilters } from '~/data/mock'
-import type { PredictionChoice } from '~/types'
-import { TrendingUp, Award, Target, Users } from 'lucide-vue-next'
+import type { AppTheme, QuestionFilter } from '~/types'
+import { Info, TrendingUp, Award, Target, Users, Loader2 } from 'lucide-vue-next'
+import { QUESTION_FILTERS } from '~/shared/constants/campaign.js'
+import { useCampaignStore } from '~/stores/campaign'
 
 const props = defineProps<{ theme: AppTheme }>()
 
-const activeFilter = ref<string>(matchFilters[0])
-const predictions = ref<Record<number, PredictionChoice>>({})
+const campaignStore = useCampaignStore()
 
-const stats = computed(() => [
-  { icon: TrendingUp, label: 'مجموع جوایز', value: '۲,۵۰۰,۰۰۰', gradient: 'from-blue-500 to-blue-600' },
-  { icon: Award, label: 'جوایز در انتظار تسویه', value: '۳۵۰,۰۰۰', gradient: 'from-purple-500 to-purple-600' },
-  {
-    icon: Target,
-    label: 'پیش‌بینی‌های صحیح',
-    value: '۲۸ مورد',
-    gradient: props.theme === 'orange' ? 'from-[#FF6600] to-[#FF4500]' : 'from-[#28A745] to-[#218838]',
-  },
-  { icon: Users, label: 'دوستان دعوت شده', value: '۱۲ نفر', gradient: 'from-pink-500 to-pink-600' },
-])
+const stats = computed(() => {
+  const s = campaignStore.summary
+  const themeGradient =
+    props.theme === 'orange' ? 'from-[#FF6600] to-[#FF4500]' : 'from-[#28A745] to-[#218838]'
 
-function handlePredict(matchId: number, prediction: PredictionChoice) {
-  predictions.value = { ...predictions.value, [matchId]: prediction }
+  if (!s) {
+    return [
+      { icon: TrendingUp, label: 'مجموع جوایز', value: '—', gradient: 'from-blue-500 to-blue-600' },
+      { icon: Award, label: 'جایزه هر پاسخ صحیح', value: '—', gradient: 'from-purple-500 to-purple-600' },
+      { icon: Target, label: 'پیش‌بینی‌های صحیح', value: '—', gradient: themeGradient },
+      { icon: Users, label: 'دوستان دعوت شده', value: '—', gradient: 'from-pink-500 to-pink-600' },
+    ]
+  }
+
+  return [
+    {
+      icon: TrendingUp,
+      label: 'مجموع جوایز',
+      value: `${formatFaNumber(s.totalPrize)} تومان`,
+      gradient: 'from-blue-500 to-blue-600',
+    },
+    {
+      icon: Award,
+      label: 'جایزه هر پاسخ صحیح',
+      value: `${formatFaNumber(s.prizePerCorrectAnswer)} تومان`,
+      gradient: 'from-purple-500 to-purple-600',
+    },
+    {
+      icon: Target,
+      label: 'پیش‌بینی‌های صحیح',
+      value: `${formatFaNumber(s.correctCount)} از ${formatFaNumber(s.totalQuestions)}`,
+      gradient: themeGradient,
+    },
+    {
+      icon: Users,
+      label: 'دوستان دعوت شده',
+      value: `${formatFaNumber(s.referralCount)} نفر`,
+      gradient: 'from-pink-500 to-pink-600',
+    },
+  ]
+})
+
+function handleFilterChange(filterValue: QuestionFilter) {
+  campaignStore.setFilter(filterValue)
 }
+
+onMounted(() => {
+  campaignStore.fetchQuestions()
+})
 </script>
 
 <template>
   <div class="space-y-4">
     <div class="grid grid-cols-2 lg:grid-cols-4 gap-3">
-      <UiStatCard v-for="(stat, index) in stats" :key="index" :icon="stat.icon" :label="stat.label" :value="stat.value"
-        :gradient="stat.gradient" />
+      <UiStatCard
+        v-for="(stat, index) in stats"
+        :key="index"
+        :icon="stat.icon"
+        :label="stat.label"
+        :value="stat.value"
+        :gradient="stat.gradient"
+      />
     </div>
 
     <div class="rounded-xl p-3 border border-blue-400/20 bg-blue-500/10 backdrop-blur-md">
@@ -44,26 +82,53 @@ function handlePredict(matchId: number, prediction: PredictionChoice) {
       </div>
     </div>
 
+    <Transition
+      enter-active-class="transition duration-200"
+      enter-from-class="opacity-0"
+      enter-to-class="opacity-100"
+    >
+      <div
+        v-if="campaignStore.errorMessage"
+        class="rounded-lg px-3 py-2 text-xs bg-red-500/15 text-red-300 border border-red-500/20 flex items-center justify-between gap-2"
+      >
+        <span>{{ campaignStore.errorMessage }}</span>
+        <button type="button" class="text-red-200 hover:text-white" @click="campaignStore.clearError()">
+          ✕
+        </button>
+      </div>
+    </Transition>
+
     <UiAppCard>
       <h2 class="text-base font-bold text-fg mb-4">
         لیست مسابقات و پیش‌بینی رویدادهای زنده
       </h2>
 
       <div class="flex items-center gap-2 overflow-x-auto pb-2 scrollbar-thin mb-4">
-        <UiThemeButton v-for="filterName in matchFilters" :key="filterName" :theme="theme"
-          :active="activeFilter === filterName" @click="activeFilter = filterName">
-          {{ filterName }}
+        <UiThemeButton
+          v-for="filter in QUESTION_FILTERS"
+          :key="filter.value"
+          :theme="theme"
+          :active="campaignStore.activeFilter === filter.value"
+          @click="handleFilterChange(filter.value)"
+        >
+          {{ filter.label }}
         </UiThemeButton>
       </div>
 
-      <div class="match-list max-h-[365px] overflow-y-auto scrollbar-thin">
+      <div v-if="campaignStore.questionsLoading && !campaignStore.visibleQuestions.length" class="py-8 flex justify-center">
+        <Loader2 class="w-6 h-6 animate-spin text-fg-muted" />
+      </div>
+
+      <div v-else-if="!campaignStore.visibleQuestions.length" class="py-8 text-center text-sm text-fg-muted">
+        موردی برای نمایش وجود ندارد.
+      </div>
+
+      <div v-else class="match-list max-h-[365px] overflow-y-auto scrollbar-thin">
         <MatchesMatchCard
-          v-for="match in matches"
-          :key="match.id"
-          v-bind="match"
+          v-for="question in campaignStore.visibleQuestions"
+          :key="question.missionId"
           :theme="theme"
-          :prediction="predictions[match.id]"
-          @predict="handlePredict(match.id, $event)"
+          :question="question"
         />
       </div>
     </UiAppCard>
