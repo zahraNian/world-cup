@@ -39,9 +39,11 @@ onMounted(() => {
       <div class="flex items-center justify-between gap-4">
         <div class="flex items-center gap-2 sm:gap-3">
           <div v-if="userStore.isAuthenticated" class="flex items-center gap-2">
-            <div class="w-7 h-7 sm:w-8 sm:h-8 rounded-full bg-gradient-to-br from-purple-400 to-purple-600 flex items-center justify-center ring-2 ring-white/30">
-              <span class="text-xs sm:text-sm">👤</span>
-            </div>
+            <img
+              src="/images/user.png"
+              alt=""
+              class="w-7 h-7 sm:w-8 sm:h-8 rounded-full object-cover ring-2 ring-white/30 shrink-0"
+            />
             <span class="text-xs sm:text-sm text-white/90 hidden sm:inline">{{ userEmail }}</span>
           </div>
 
