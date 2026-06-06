@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import type { AppTheme } from '~/types'
-import { Palette, LogIn, Loader2 } from 'lucide-vue-next'
+import { LogIn, Loader2 } from 'lucide-vue-next'
 import { useUserStore } from '~/stores/user.js'
 import { getLoginUrl } from '~/shared/utils/url/getLoginUrl.js'
 
@@ -8,9 +8,8 @@ const props = defineProps<{
   theme: AppTheme
 }>()
 
-const emit = defineEmits<{ themeToggle: [] }>()
-
 const userStore = useUserStore()
+const { brand } = useBrand()
 const themeClasses = computed(() => useThemeClasses(props.theme))
 
 const loginUrl = computed(() => {
@@ -65,29 +64,35 @@ onMounted(() => {
             <span class="text-xs sm:text-sm">ورود/ثبت‌نام</span>
           </a>
 
-          <button
-            type="button"
-            class="p-1.5 sm:p-2 rounded-lg bg-white/15 hover:bg-white/25 text-white transition-colors backdrop-blur-sm"
-            title="تغییر تم"
-            @click="emit('themeToggle')"
-          >
-            <Palette class="w-4 h-4 sm:w-5 sm:h-5" />
-          </button>
         </div>
 
         <div class="text-center flex-1">
           <h1 class="text-sm sm:text-lg md:text-xl font-bold text-white drop-shadow-md">
-            کمپین پیش‌بینی جام جهانی ۲۰۲۶
+            {{ brand.title }}
           </h1>
         </div>
 
         <div class="flex items-center gap-2 sm:gap-3">
-          <a href="#" class="text-xs sm:text-sm text-white/85 hover:text-white hidden sm:inline transition-colors">
-            صرافی
+          <a
+            :href="brand.exchangeUrl"
+            target="_blank"
+            rel="noopener noreferrer"
+            class="text-xs sm:text-sm text-white/85 hover:text-white hidden sm:inline transition-colors"
+          >
+            {{ brand.exchangeName }}
           </a>
-          <div class="w-8 h-8 sm:w-10 sm:h-10 rounded-full bg-gradient-to-br from-blue-500 via-purple-600 to-pink-500 flex items-center justify-center shadow-lg">
-            <span class="text-white text-base sm:text-lg">⚽</span>
-          </div>
+          <a
+            :href="brand.exchangeUrl"
+            target="_blank"
+            rel="noopener noreferrer"
+            class="block shrink-0"
+          >
+            <img
+              :src="brand.logoUrl"
+              :alt="brand.logoAlt"
+              class="h-7 sm:h-8 w-auto max-w-[7rem] sm:max-w-[8rem] object-contain"
+            />
+          </a>
         </div>
       </div>
     </div>

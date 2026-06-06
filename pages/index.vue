@@ -2,7 +2,7 @@
 import { useCampaignStore } from '~/stores/campaign'
 import { useUserStore } from '~/stores/user.js'
 
-const { theme, toggleTheme } = useAppTheme()
+const { theme } = useAppTheme()
 const campaignStore = useCampaignStore()
 const userStore = useUserStore()
 
@@ -34,7 +34,7 @@ watch(
 
 <template>
   <div class="h-full flex flex-col">
-    <LayoutAppHeader :theme="theme" @theme-toggle="toggleTheme" />
+    <LayoutAppHeader :theme="theme" />
 
     <main class="flex-1 overflow-y-auto">
       <div class="max-w-[1440px] mx-auto px-4 sm:px-6 py-4 sm:py-6">

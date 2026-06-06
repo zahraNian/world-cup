@@ -2,6 +2,12 @@
 import { useAbrBusSubscriptions } from '~/shared/composables/useAbrBusSubscriptions.js'
 
 useAbrBusSubscriptions()
+
+const { brand } = useBrand()
+
+useHead({
+  title: () => brand.value.title,
+})
 </script>
 
 <template>

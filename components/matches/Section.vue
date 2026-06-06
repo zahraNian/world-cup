@@ -11,7 +11,7 @@ const campaignStore = useCampaignStore()
 const stats = computed(() => {
   const s = campaignStore.summary
   const themeGradient =
-    props.theme === 'orange' ? 'from-[#FF6600] to-[#FF4500]' : 'from-[#28A745] to-[#218838]'
+    props.theme === 'nipoto' ? 'from-[#FF9270] to-[#E0715F]' : 'from-[#009B87] to-[#007A6B]'
 
   if (!s) {
     return [
