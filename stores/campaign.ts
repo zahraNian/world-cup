@@ -89,9 +89,8 @@ export const useCampaignStore = defineStore('campaign', () => {
 
     const campaign = await api(app.Marketing.Campaign.lists.campaign.get(), {
       scope: TR_ERR_SCOPE.CAMPAIGN,
-    }) as CampaignInfo
-
-    campaignId.value = resolveCampaignId(campaign)
+    }) as CampaignInfo[]
+    campaignId.value = resolveCampaignId(campaign[0] ?? { id: '', campaignId: '' })
     return campaignId.value
   }
 
@@ -112,7 +111,6 @@ export const useCampaignStore = defineStore('campaign', () => {
         app.Marketing.Campaign.lists.campaign.getMissions({ campaignId: id, filter }),
         { scope: TR_ERR_SCOPE.CAMPAIGN },
       ) as MissionsResponse
-
       setQuestions(filter, data?.questions || [])
 
       if (data?.otherMissions?.length) {
