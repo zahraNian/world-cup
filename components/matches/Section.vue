@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import type { AppTheme, QuestionFilter } from '~/types'
-import { Info, TrendingUp, Award, Target, Users, Loader2 } from 'lucide-vue-next'
+import { Info, TrendingUp, Target, Users, Wallet, Loader2 } from 'lucide-vue-next'
 import { QUESTION_FILTERS } from '~/shared/constants/campaign.js'
 import { useCampaignStore } from '~/stores/campaign'
 
@@ -16,7 +16,7 @@ const stats = computed(() => {
   if (!s) {
     return [
       { icon: TrendingUp, label: 'مجموع جوایز', value: '—', gradient: 'from-blue-500 to-blue-600' },
-      { icon: Award, label: 'جایزه هر پاسخ صحیح', value: '—', gradient: 'from-purple-500 to-purple-600' },
+      { icon: Wallet, label: 'برداشت‌های کریپتو', value: '—', gradient: 'from-purple-500 to-purple-600' },
       { icon: Target, label: 'پیش‌بینی‌های صحیح', value: '—', gradient: themeGradient },
       { icon: Users, label: 'دوستان دعوت شده', value: '—', gradient: 'from-pink-500 to-pink-600' },
     ]
@@ -26,13 +26,13 @@ const stats = computed(() => {
     {
       icon: TrendingUp,
       label: 'مجموع جوایز',
-      value: `${formatFaNumber(s.totalPrize)} تومان`,
+      value: `${formatFaNumber(s.totalAmount)} تومان`,
       gradient: 'from-blue-500 to-blue-600',
     },
     {
-      icon: Award,
-      label: 'جایزه هر پاسخ صحیح',
-      value: `${formatFaNumber(s.prizePerCorrectAnswer)} تومان`,
+      icon: Wallet,
+      label: 'برداشت‌های کریپتو',
+      value: `${formatFaNumber(s.withdrawCount)} مورد`,
       gradient: 'from-purple-500 to-purple-600',
     },
     {
@@ -55,7 +55,7 @@ function handleFilterChange(filterValue: QuestionFilter) {
 }
 
 onMounted(() => {
-  campaignStore.fetchQuestions()
+  campaignStore.fetchMissions()
 })
 </script>
 

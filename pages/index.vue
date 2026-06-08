@@ -26,7 +26,7 @@ watch(
       campaignStore.initUserData()
     } else {
       campaignStore.resetUserData()
-      campaignStore.fetchQuestions(campaignStore.activeFilter, { force: true })
+      campaignStore.fetchMissions(campaignStore.activeFilter, { force: true })
     }
   },
 )

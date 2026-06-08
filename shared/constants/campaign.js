@@ -12,8 +12,6 @@ export const QUESTION_FILTERS = Object.freeze([
   { label: 'بدون پاسخ', value: QUESTION_FILTER.UNANSWERED },
 ])
 
-export const SCENARIO_KEYS = Object.freeze(['scenarioOne', 'scenarioTwo', 'scenarioThree'])
-
 export const MISSION_ERROR = Object.freeze({
   NOT_FOUND: 'MISSION_NOT_FOUND',
   ALREADY_ANSWERED: 'ALREADY_ANSWERED',

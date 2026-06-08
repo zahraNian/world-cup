@@ -1,6 +1,7 @@
-import type { CampaignQuestion, PredictionRecord, QuestionDetails, ScenarioKey } from '~/types'
+import type { CampaignQuestion, PredictionRecord } from '~/types'
+import { getTeamName } from '~/shared/constants/teams'
 
-export function parseAmount(value: string | number | undefined) {
+export function parseAmount(value: string | number | undefined | null) {
   if (typeof value === 'number') return value
   return Math.floor(parseFloat(value || '0') || 0)
 }
@@ -15,69 +16,55 @@ export function formatQuestionDate(isoString: string | undefined) {
   }
 }
 
+export function getMatchTitle(question: CampaignQuestion) {
+  return `${getTeamName(question.firstItem)} - ${getTeamName(question.secondItem)}`
+}
+
+export function formatScenarioLabel(value: string, question: CampaignQuestion) {
+  if (value === 'DRAW') return 'مساوی'
+
+  const winMatch = value.match(/^WIN_(.+)$/)
+  if (winMatch) return `برد ${getTeamName(winMatch[1])}`
+
+  return value
+}
+
+export function getScenarioOptions(question: CampaignQuestion) {
+  return [
+    { value: question.scenarioOne, label: formatScenarioLabel(question.scenarioOne, question) },
+    { value: question.scenarioTwo, label: formatScenarioLabel(question.scenarioTwo, question) },
+    { value: question.scenarioThree, label: formatScenarioLabel(question.scenarioThree, question) },
+  ].filter((option) => option.value && option.label)
+}
+
 export function isQuestionLocked(question: CampaignQuestion | null | undefined) {
   if (!question) return true
   if (question.userAnswer) return true
-  if (question.status !== 'active') return true
   if (question.finishesAt && Date.now() > new Date(question.finishesAt).getTime()) return true
   return false
 }
 
-export function getScenarioOptions(details: QuestionDetails | undefined) {
-  if (!details) return [] as { key: ScenarioKey; label: string }[]
-
-  const keys: ScenarioKey[] = ['scenarioOne', 'scenarioTwo', 'scenarioThree']
-
-  return keys.map((key) => ({
-    key,
-    label: details[key] || '',
-  })).filter((option) => option.label)
-}
-
-export function getScenarioLabel(details: QuestionDetails | undefined, key: ScenarioKey | null) {
-  if (!key) return ''
-  return details?.[key] || key
-}
-
 export function mapQuestionToHistoryRecord(question: CampaignQuestion): PredictionRecord {
-  const { missionId, missionName, details, userAnswer, currencyAmount, finishesAt } = question
-  const { correctScenario } = details
+  const { missionId, userAnswer, correctScenario, rewardAmount, finishesAt } = question
 
   let status: PredictionRecord['status'] = 'pending'
   if (correctScenario && userAnswer) {
     status = userAnswer === correctScenario ? 'won' : 'lost'
   }
 
-  const reward = status === 'won' ? parseAmount(currencyAmount) : 0
+  const reward = status === 'won' ? parseAmount(rewardAmount) : 0
 
   return {
     id: missionId,
     date: formatQuestionDate(finishesAt).date,
-    match: missionName,
-    userChoice: getScenarioLabel(details, userAnswer),
-    result: correctScenario ? getScenarioLabel(details, correctScenario) : 'در انتظار نتیجه',
+    match: getMatchTitle(question),
+    userChoice: userAnswer ? formatScenarioLabel(userAnswer, question) : '—',
+    result: correctScenario ? formatScenarioLabel(correctScenario, question) : 'در انتظار نتیجه',
     status,
     reward,
   }
 }
 
-export function getReferralStatus(ref: { isKYC: boolean; hasAnswered: boolean }) {
-  if (!ref.isKYC) {
-    return {
-      status: 'pending_kyc' as const,
-      statusText: 'احراز هویت نشده',
-    }
-  }
-
-  if (ref.hasAnswered) {
-    return {
-      status: 'active' as const,
-      statusText: 'شرکت در کمپین',
-    }
-  }
-
-  return {
-    status: 'kyc_only' as const,
-    statusText: 'احراز هویت شده',
-  }
+export function resolveCampaignId(campaign: { id?: string; campaignId?: string }) {
+  return campaign.id || campaign.campaignId || ''
 }

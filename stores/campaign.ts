@@ -1,24 +1,26 @@
 import { defineStore } from 'pinia'
 import { computed, ref, shallowRef } from 'vue'
 import type {
+  CampaignInfo,
   CampaignQuestion,
   CampaignSummary,
+  MissionsResponse,
+  OtherMission,
   QuestionFilter,
   RankingEntry,
-  RefsResponse,
-  ScenarioKey,
 } from '~/types'
 import { useApp } from '~/shared/utils/abr.js'
 import { api } from '~/shared/api/api.js'
 import { TR_ERR_SCOPE } from '~/shared/constants/trErrScope.js'
 import { MISSION_ERROR, QUESTION_FILTER } from '~/shared/constants/campaign.js'
-import { mapQuestionToHistoryRecord } from '~/shared/utils/campaign'
+import { mapQuestionToHistoryRecord, resolveCampaignId } from '~/shared/utils/campaign'
 import { useUserStore } from '~/stores/user.js'
 
 export const useCampaignStore = defineStore('campaign', () => {
+  const campaignId = ref('')
   const summary = ref<CampaignSummary | null>(null)
   const ranking = ref<RankingEntry[]>([])
-  const refs = ref<RefsResponse | null>(null)
+  const otherMissions = ref<OtherMission[]>([])
   const questionsByFilter = shallowRef<Partial<Record<QuestionFilter, CampaignQuestion[]>>>({})
   const activeFilter = ref<QuestionFilter>(QUESTION_FILTER.ALL)
   const hiddenMissionIds = ref(new Set<string>())
@@ -28,6 +30,10 @@ export const useCampaignStore = defineStore('campaign', () => {
   const questionsLoading = ref(false)
   const initialized = ref(false)
   const errorMessage = ref<string | null>(null)
+
+  const referralMission = computed(() =>
+    otherMissions.value.find((mission) => mission.taskName === 'referral') ?? null,
+  )
 
   const visibleQuestions = computed(() => {
     const list = questionsByFilter.value[activeFilter.value] || []
@@ -75,7 +81,21 @@ export const useCampaignStore = defineStore('campaign', () => {
     return true
   }
 
-  async function fetchQuestions(filter: QuestionFilter = activeFilter.value, { force = false } = {}) {
+  async function ensureCampaignId() {
+    if (campaignId.value) return campaignId.value
+
+    const app = useApp()
+    if (!app) return ''
+
+    const campaign = await api(app.Marketing.Campaign.lists.campaign.get(), {
+      scope: TR_ERR_SCOPE.CAMPAIGN,
+    }) as CampaignInfo
+
+    campaignId.value = resolveCampaignId(campaign)
+    return campaignId.value
+  }
+
+  async function fetchMissions(filter: QuestionFilter = activeFilter.value, { force = false } = {}) {
     if (!force && questionsByFilter.value[filter]) {
       return questionsByFilter.value[filter]!
     }
@@ -83,14 +103,23 @@ export const useCampaignStore = defineStore('campaign', () => {
     const app = useApp()
     if (!app) return []
 
+    const id = await ensureCampaignId()
+    if (!id) return []
+
     questionsLoading.value = true
     try {
-      const data = await api(app.Marketing.Campaign.lists.campaign.getQuestions({ filter }), {
-        scope: TR_ERR_SCOPE.CAMPAIGN,
-      }) as CampaignQuestion[]
+      const data = await api(
+        app.Marketing.Campaign.lists.campaign.getMissions({ campaignId: id, filter }),
+        { scope: TR_ERR_SCOPE.CAMPAIGN },
+      ) as MissionsResponse
 
-      setQuestions(filter, data || [])
-      return data
+      setQuestions(filter, data?.questions || [])
+
+      if (data?.otherMissions?.length) {
+        otherMissions.value = data.otherMissions
+      }
+
+      return data?.questions || []
     } finally {
       questionsLoading.value = false
     }
@@ -128,25 +157,10 @@ export const useCampaignStore = defineStore('campaign', () => {
     }
   }
 
-  async function fetchRefs({ force = false } = {}) {
-    if (!force && refs.value) return refs.value
-
-    const authed = await ensureAuth()
-    if (!authed) return null
-
-    const app = useApp()
-    if (!app) return null
-
-    refs.value = await api(app.Marketing.Campaign.lists.campaign.getRefs(), {
-      scope: TR_ERR_SCOPE.CAMPAIGN,
-    }) as RefsResponse
-    return refs.value
-  }
-
   async function initPublicData() {
     await Promise.all([
       fetchRanking(),
-      fetchQuestions(QUESTION_FILTER.ALL),
+      fetchMissions(QUESTION_FILTER.ALL),
     ])
   }
 
@@ -161,9 +175,8 @@ export const useCampaignStore = defineStore('campaign', () => {
 
       await Promise.all([
         fetchSummary(),
-        fetchRefs(),
-        fetchQuestions(activeFilter.value, { force: true }),
-        fetchQuestions(QUESTION_FILTER.ANSWERED, { force: true }),
+        fetchMissions(activeFilter.value, { force: true }),
+        fetchMissions(QUESTION_FILTER.ANSWERED, { force: true }),
       ])
       initialized.value = true
     } catch (err) {
@@ -182,11 +195,11 @@ export const useCampaignStore = defineStore('campaign', () => {
   async function setFilter(filter: QuestionFilter) {
     activeFilter.value = filter
     if (!questionsByFilter.value[filter]) {
-      await fetchQuestions(filter)
+      await fetchMissions(filter)
     }
   }
 
-  async function submitAnswer(missionId: string, value: ScenarioKey) {
+  async function submitAnswer(missionId: string, value: string) {
     if (submittingMissionIds.value.has(missionId)) return { ok: false as const }
 
     const authed = await ensureAuth()
@@ -208,8 +221,8 @@ export const useCampaignStore = defineStore('campaign', () => {
 
       await Promise.all([
         fetchSummary({ force: true }),
-        fetchQuestions(activeFilter.value, { force: true }),
-        fetchQuestions(QUESTION_FILTER.ANSWERED, { force: true }),
+        fetchMissions(activeFilter.value, { force: true }),
+        fetchMissions(QUESTION_FILTER.ANSWERED, { force: true }),
       ])
 
       return { ok: true as const }
@@ -247,7 +260,6 @@ export const useCampaignStore = defineStore('campaign', () => {
 
   function resetUserData() {
     summary.value = null
-    refs.value = null
     hiddenMissionIds.value = new Set()
     submittingMissionIds.value = new Set()
     initialized.value = false
@@ -259,9 +271,11 @@ export const useCampaignStore = defineStore('campaign', () => {
   }
 
   return {
+    campaignId,
     summary,
     ranking,
-    refs,
+    otherMissions,
+    referralMission,
     activeFilter,
     visibleQuestions,
     historyRecords,
@@ -274,10 +288,9 @@ export const useCampaignStore = defineStore('campaign', () => {
     initDashboard,
     initPublicData,
     initUserData,
-    fetchQuestions,
+    fetchMissions,
     fetchSummary,
     fetchRanking,
-    fetchRefs,
     setFilter,
     submitAnswer,
     clearError,

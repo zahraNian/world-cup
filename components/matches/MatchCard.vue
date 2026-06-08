@@ -1,12 +1,14 @@
 <script setup lang="ts">
-import type { AppTheme, CampaignQuestion, ScenarioKey } from '~/types'
+import type { AppTheme, CampaignQuestion } from '~/types'
 import { Clock, Trophy, Zap, Loader2, CheckCircle2, Star, LogIn } from 'lucide-vue-next'
 import {
   formatQuestionDate,
+  getMatchTitle,
   getScenarioOptions,
   isQuestionLocked,
   parseAmount,
 } from '~/shared/utils/campaign'
+import { getTeamName } from '~/shared/constants/teams'
 import { useCampaignStore } from '~/stores/campaign'
 import { useUserStore } from '~/stores/user.js'
 import { getLoginUrl } from '~/shared/utils/url/getLoginUrl.js'
@@ -27,9 +29,11 @@ const themeClasses = computed(() => useThemeClasses(props.theme))
 
 const formattedDate = computed(() => formatQuestionDate(props.question.finishesAt))
 
-const reward = computed(() => parseAmount(props.question.currencyAmount))
+const reward = computed(() => parseAmount(props.question.rewardAmount))
 
-const voteOptions = computed(() => getScenarioOptions(props.question.details))
+const matchTitle = computed(() => getMatchTitle(props.question))
+
+const voteOptions = computed(() => getScenarioOptions(props.question))
 
 const loginUrl = computed(() => {
   if (import.meta.client) return getLoginUrl()
@@ -50,10 +54,10 @@ const itemClasses = computed(() => [
       : 'border-r-transparent',
 ])
 
-async function handleVote(key: ScenarioKey) {
+async function handleVote(value: string) {
   if (isLocked.value || isLoading.value) return
 
-  const result = await campaignStore.submitAnswer(props.question.missionId, key)
+  const result = await campaignStore.submitAnswer(props.question.missionId, value)
 
   if (result.ok) {
     showSuccess.value = true
@@ -89,10 +93,18 @@ async function handleVote(key: ScenarioKey) {
         </div>
       </div>
 
-      <div class="text-center" :class="{ 'blur-[0.5px]': isLocked }">
-        <div class="flex items-center justify-center gap-2">
-          <Zap class="w-3.5 h-3.5" :class="themeClasses.accent" />
-          <h3 class="text-sm font-bold text-fg">{{ question.missionName }}</h3>
+      <div class="flex items-center justify-between gap-2" :class="{ 'blur-[0.5px]': isLocked }">
+        <div class="flex flex-col items-center gap-1 flex-1 min-w-0">
+          <div class="text-sm font-bold text-fg text-center truncate w-full">{{ getTeamName(question.firstItem) }}</div>
+          <div class="text-[10px] text-fg-muted">{{ question.firstItem }}</div>
+        </div>
+        <div class="px-2 flex flex-col items-center gap-0.5 flex-shrink-0">
+          <Zap class="w-3 h-3" :class="themeClasses.accent" />
+          <div class="text-[10px] font-bold text-fg-faint">VS</div>
+        </div>
+        <div class="flex flex-col items-center gap-1 flex-1 min-w-0">
+          <div class="text-sm font-bold text-fg text-center truncate w-full">{{ getTeamName(question.secondItem) }}</div>
+          <div class="text-[10px] text-fg-muted">{{ question.secondItem }}</div>
         </div>
       </div>
 
@@ -123,16 +135,16 @@ async function handleVote(key: ScenarioKey) {
       <div v-else-if="showVoteButtons" class="grid grid-cols-3 gap-2">
         <button
           v-for="option in voteOptions"
-          :key="option.key"
+          :key="option.value"
           type="button"
           :disabled="isLoading"
           class="py-2.5 rounded-lg transition-all text-xs sm:text-sm font-medium"
           :class="
-            question.userAnswer === option.key
+            question.userAnswer === option.value
               ? `${themeClasses.gradient} text-white shadow-lg`
               : 'bg-surface-inset border-2 border-line hover:border-line-strong text-fg-secondary shadow-sm hover:bg-surface-hover'
           "
-          @click="handleVote(option.key)"
+          @click="handleVote(option.value)"
         >
           <Loader2 v-if="isLoading" class="w-4 h-4 animate-spin mx-auto" />
           <span v-else class="truncate block px-0.5">{{ option.label }}</span>
@@ -154,7 +166,7 @@ async function handleVote(key: ScenarioKey) {
         :class="{ 'blur-[0.5px]': isLocked }"
       >
         <Zap class="w-3.5 h-3.5 flex-shrink-0" :class="themeClasses.accent" />
-        <span class="text-sm font-semibold text-fg text-center truncate">{{ question.missionName }}</span>
+        <span class="text-sm font-semibold text-fg text-center truncate">{{ matchTitle }}</span>
         <span
           v-if="question.special"
           class="inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded text-[10px] font-bold bg-amber-500/15 text-amber-300 flex-shrink-0"
@@ -199,16 +211,16 @@ async function handleVote(key: ScenarioKey) {
         <div v-else-if="showVoteButtons" class="grid grid-cols-3 gap-1.5">
           <button
             v-for="option in voteOptions"
-            :key="option.key"
+            :key="option.value"
             type="button"
             :disabled="isLoading"
             class="py-2 px-1 rounded-md transition-all text-[11px] font-medium truncate"
             :class="
-              question.userAnswer === option.key
+              question.userAnswer === option.value
                 ? `${themeClasses.gradient} text-white shadow-sm`
                 : 'glass-inset border border-line hover:border-line-strong text-fg-secondary hover:bg-white/[0.08]'
             "
-            @click="handleVote(option.key)"
+            @click="handleVote(option.value)"
           >
             <Loader2 v-if="isLoading" class="w-3.5 h-3.5 animate-spin mx-auto" />
             <span v-else>{{ option.label }}</span>

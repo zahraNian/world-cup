@@ -18,7 +18,7 @@ const userRank = computed(() => {
   return {
     correctCount: s.correctCount,
     referralCount: s.referralCount,
-    totalPrize: s.totalPrize,
+    totalAmount: s.totalAmount,
   }
 })
 
@@ -50,7 +50,7 @@ onMounted(() => {
         :theme="theme"
         :correct-count="userRank.correctCount"
         :referral-count="userRank.referralCount"
-        :total-prize="userRank.totalPrize"
+        :total-amount="userRank.totalAmount"
       />
       <LeaderboardRow
         v-for="entry in campaignStore.ranking"

@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import type { AppTheme, RankingEntry } from '~/types'
-import { Crown, Medal, Target } from 'lucide-vue-next'
+import { Crown, Medal, Target, Users } from 'lucide-vue-next'
 
 const props = defineProps<{
   theme: AppTheme
@@ -37,17 +37,21 @@ const themeClasses = computed(() => useThemeClasses(props.theme))
     </div>
 
     <div class="flex-1 min-w-0">
-      <div class="text-xs font-medium text-fg truncate">{{ entry.identifier }}</div>
+      <div class="text-xs font-medium text-fg truncate" dir="ltr">{{ entry.mobile }}</div>
       <div class="flex items-center gap-2 mt-0.5">
         <div class="flex items-center gap-0.5 text-[10px] text-fg-muted">
           <Target class="w-2.5 h-2.5" />
-          <span>{{ entry.correctCount }}</span>
+          <span>{{ entry.correctAnswers }}</span>
+        </div>
+        <div class="flex items-center gap-0.5 text-[10px] text-fg-muted">
+          <Users class="w-2.5 h-2.5" />
+          <span>{{ entry.friends }}</span>
         </div>
       </div>
     </div>
 
     <div class="text-xs font-bold" :class="themeClasses.text">
-      {{ formatFaNumber(entry.totalPrize) }}
+      {{ formatFaNumber(entry.totalAmount) }}
     </div>
   </div>
 </template>

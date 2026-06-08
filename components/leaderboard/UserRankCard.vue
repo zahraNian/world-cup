@@ -6,7 +6,7 @@ const props = defineProps<{
   theme: AppTheme
   correctCount: number
   referralCount: number
-  totalPrize: number
+  totalAmount: number
 }>()
 
 const themeClasses = computed(() => useThemeClasses(props.theme))
@@ -36,7 +36,7 @@ const themeClasses = computed(() => useThemeClasses(props.theme))
     </div>
 
     <div class="text-xs font-bold" :class="themeClasses.text">
-      {{ formatFaNumber(totalPrize) }}
+      {{ formatFaNumber(totalAmount) }}
     </div>
   </div>
 </template>
