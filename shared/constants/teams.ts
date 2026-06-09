@@ -27,6 +27,41 @@ const TEAM_NAMES: Record<string, string> = {
   USA: 'آمریکا',
 }
 
+const TEAM_FLAG_CODES: Record<string, string> = {
+  ARG: 'ar',
+  AUS: 'au',
+  BEL: 'be',
+  BRA: 'br',
+  CAN: 'ca',
+  COL: 'co',
+  CRO: 'hr',
+  EGY: 'eg',
+  ENG: 'gb-eng',
+  ESP: 'es',
+  FRA: 'fr',
+  GER: 'de',
+  IRN: 'ir',
+  ITA: 'it',
+  JPN: 'jp',
+  KOR: 'kr',
+  MAR: 'ma',
+  MEX: 'mx',
+  NED: 'nl',
+  NZL: 'nz',
+  POR: 'pt',
+  QAT: 'qa',
+  SAU: 'sa',
+  SEN: 'sn',
+  URU: 'uy',
+  USA: 'us',
+}
+
 export function getTeamName(code: string) {
-  return TEAM_NAMES[code] || code
+  return TEAM_NAMES[code.toUpperCase()] || code
+}
+
+export function getTeamFlagUrl(code: string) {
+  const flagCode = TEAM_FLAG_CODES[code.toUpperCase()]
+  if (!flagCode) return null
+  return `/flags/${flagCode}.png`
 }

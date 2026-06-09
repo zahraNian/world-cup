@@ -1,14 +1,12 @@
 <script setup lang="ts">
 import type { AppTheme, CampaignQuestion } from '~/types'
-import { Clock, Trophy, Zap, Loader2, CheckCircle2, Star, LogIn } from 'lucide-vue-next'
+import { Clock, Trophy, Loader2, CheckCircle2, Star, LogIn } from 'lucide-vue-next'
 import {
   formatQuestionDate,
-  getMatchTitle,
   getScenarioOptions,
   isQuestionLocked,
   parseAmount,
 } from '~/shared/utils/campaign'
-import { getTeamName } from '~/shared/constants/teams'
 import { useCampaignStore } from '~/stores/campaign'
 import { useUserStore } from '~/stores/user.js'
 import { getLoginUrl } from '~/shared/utils/url/getLoginUrl.js'
@@ -30,8 +28,6 @@ const themeClasses = computed(() => useThemeClasses(props.theme))
 const formattedDate = computed(() => formatQuestionDate(props.question.finishesAt))
 
 const reward = computed(() => parseAmount(props.question.rewardAmount))
-
-const matchTitle = computed(() => getMatchTitle(props.question))
 
 const voteOptions = computed(() => getScenarioOptions(props.question))
 
@@ -93,20 +89,12 @@ async function handleVote(value: string) {
         </div>
       </div>
 
-      <div class="flex items-center justify-between gap-2" :class="{ 'blur-[0.5px]': isLocked }">
-        <div class="flex flex-col items-center gap-1 flex-1 min-w-0">
-          <div class="text-sm font-bold text-fg text-center truncate w-full">{{ getTeamName(question.firstItem) }}</div>
-          <div class="text-[10px] text-fg-muted">{{ question.firstItem }}</div>
-        </div>
-        <div class="px-2 flex flex-col items-center gap-0.5 flex-shrink-0">
-          <Zap class="w-3 h-3" :class="themeClasses.accent" />
-          <div class="text-[10px] font-bold text-fg-faint">VS</div>
-        </div>
-        <div class="flex flex-col items-center gap-1 flex-1 min-w-0">
-          <div class="text-sm font-bold text-fg text-center truncate w-full">{{ getTeamName(question.secondItem) }}</div>
-          <div class="text-[10px] text-fg-muted">{{ question.secondItem }}</div>
-        </div>
-      </div>
+      <MatchesMatchTeams
+        :first-item="question.firstItem"
+        :second-item="question.secondItem"
+        :accent-class="themeClasses.accent"
+        :blurred="isLocked"
+      />
 
       <div
         v-if="isLocked"
@@ -161,15 +149,18 @@ async function handleVote(value: string) {
         <span class="text-[10px] text-fg-muted leading-tight">{{ formattedDate.date }}</span>
       </div>
 
-      <div
-        class="flex-1 flex items-center justify-center gap-2 min-w-0 py-1"
-        :class="{ 'blur-[0.5px]': isLocked }"
-      >
-        <Zap class="w-3.5 h-3.5 flex-shrink-0" :class="themeClasses.accent" />
-        <span class="text-sm font-semibold text-fg text-center truncate">{{ matchTitle }}</span>
+      <div class="flex-1 flex items-center justify-center gap-2 min-w-0 py-1">
+        <MatchesMatchTeams
+          :first-item="question.firstItem"
+          :second-item="question.secondItem"
+          :accent-class="themeClasses.accent"
+          :blurred="isLocked"
+          compact
+        />
         <span
           v-if="question.special"
           class="inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded text-[10px] font-bold bg-amber-500/15 text-amber-300 flex-shrink-0"
+          :class="{ 'blur-[0.5px]': isLocked }"
         >
           <Star class="w-2.5 h-2.5" />
         </span>
