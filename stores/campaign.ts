@@ -144,11 +144,15 @@ export const useCampaignStore = defineStore('campaign', () => {
     const app = useApp()
     if (!app) return []
 
+    const id = await ensureCampaignId()
+    if (!id) return []
+
     rankingLoading.value = true
     try {
-      ranking.value = (await api(app.Marketing.Campaign.lists.campaign.getRanking(), {
-        scope: TR_ERR_SCOPE.CAMPAIGN,
-      })) as RankingEntry[] || []
+      ranking.value = (await api(
+        app.Marketing.Campaign.lists.campaign.getRanking({ campaignId: id }),
+        { scope: TR_ERR_SCOPE.CAMPAIGN },
+      )) as RankingEntry[] || []
       return ranking.value
     } finally {
       rankingLoading.value = false
