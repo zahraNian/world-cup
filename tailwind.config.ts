@@ -9,6 +9,9 @@ export default {
   ],
   theme: {
     extend: {
+      fontFamily: {
+        sans: ['Vazirmatn', 'system-ui', 'sans-serif'],
+      },
       colors: {
         surface: {
           DEFAULT: '#0b0f17',
